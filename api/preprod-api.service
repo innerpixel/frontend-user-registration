@@ -1,0 +1,14 @@
+[Unit]
+Description=Preprod API Service
+After=network.target mongodb.service
+
+[Service]
+Type=simple
+User=nsbasicus
+WorkingDirectory=/var/www/preprod.local/api
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
