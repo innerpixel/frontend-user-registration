@@ -26,7 +26,14 @@ Thumbs.db
 # Build
 dist/
 build/
-coverage/
+
+# Web server directories
+html/
+www/
+
+# Uploads and user content
+api/public/uploads/*
+!api/public/uploads/.gitkeep
 
 # Temporary files
 *.tmp
