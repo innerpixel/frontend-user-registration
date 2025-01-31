@@ -9,11 +9,14 @@ const logger = createLogger('authController');
 
 class AuthController {
     async register(req, res) {
-        const { username, displayName, personalEmail, password, simFrequency } = req.body;
+        const { username, displayName, personalEmail, password, phoneNumber } = req.body;
 
         try {
             // Start registration process
             logger.info(`Starting registration for user: ${username}`);
+            
+            // Generate email account from username
+            const emailAccount = `${username}@ld-csmlmail.test`;
             
             // 1. Check if username is available
             const existingUser = await User.findOne({ 
@@ -21,43 +24,47 @@ class AuthController {
                     { username },
                     { displayName },
                     { personalEmail },
-                    { simFrequency }
+                    { emailAccount }
                 ]
             });
 
             if (existingUser) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Username, display name, email, or SIM frequency already in use'
+                    message: 'Username, display name, or email already in use'
                 });
             }
 
             // 2. Create user in MongoDB
-            const systemEmail = `${username}@local.domain`;
             const user = new User({
                 username,
                 displayName,
-                systemEmail,
+                emailAccount,
                 personalEmail,
                 password,
-                simFrequency
+                phoneNumber
             });
 
-            // Update status to USER_CREATED
-            await statusService.updateStatus(user, 'USER_CREATED');
+            // Save user with initial status
             await user.save();
 
-            // 3. Generate JWT for system user creation
+            // 3. Update status to USERNAME_VALIDATED
+            await statusService.updateStatus(user, 'USERNAME_VALIDATED');
+
+            // 4. Update status to USER_CREATED
+            await statusService.updateStatus(user, 'USER_CREATED');
+
+            // 5. Generate JWT for system user creation
             const token = jwt.sign(
                 { userId: user._id },
                 process.env.JWT_SECRET,
                 { expiresIn: '1h' }
             );
 
-            // 4. Create system user
+            // 6. Create system user
             try {
                 await systemIntegrationService.createSystemUser(
-                    { username, systemEmail },
+                    { username, emailAccount },
                     token
                 );
                 await statusService.updateStatus(user, 'SYSTEM_USER_CREATED');
@@ -66,7 +73,7 @@ class AuthController {
                 throw new Error('System user creation failed');
             }
 
-            // 5. Generate verification token
+            // 7. Generate verification token
             const verificationToken = jwt.sign(
                 { userId: user._id },
                 process.env.JWT_SECRET,
@@ -76,7 +83,7 @@ class AuthController {
             user.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
             await user.save();
 
-            // 6. Send verification email
+            // 8. Send verification email
             try {
                 await sendVerificationEmail({
                     to: personalEmail,
@@ -96,40 +103,17 @@ class AuthController {
                 data: {
                     username: user.username,
                     displayName: user.displayName,
-                    systemEmail: user.systemEmail,
+                    emailAccount: user.emailAccount,
                     registrationStatus: user.registrationStatus
                 }
             });
 
         } catch (error) {
             logger.error(`Registration failed: ${error.message}`);
-            
-            // If we created a user but later steps failed, update status to FAILED
-            if (error.message !== 'Validation failed') {
-                const user = await User.findOne({ username });
-                if (user) {
-                    await statusService.updateStatus(user, 'FAILED', {
-                        error: error.message
-                    });
-
-                    // Attempt to clean up system user if it was created
-                    if (user.registrationStatus === 'SYSTEM_USER_CREATED') {
-                        try {
-                            await systemIntegrationService.removeSystemUser(
-                                username,
-                                jwt.sign({ userId: user._id }, process.env.JWT_SECRET)
-                            );
-                        } catch (cleanupError) {
-                            logger.error(`Failed to clean up system user: ${cleanupError.message}`);
-                        }
-                    }
-                }
-            }
-
             res.status(500).json({
                 success: false,
-                message: 'Registration failed',
-                error: error.message
+                message: 'Registration failed. Please try again later.',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
             });
         }
     }

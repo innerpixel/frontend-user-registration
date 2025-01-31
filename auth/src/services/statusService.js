@@ -9,7 +9,6 @@ class StatusService {
             'USERNAME_VALIDATED',
             'USER_CREATED',
             'SYSTEM_USER_CREATED',
-            'MAIL_CONFIGURED',
             'VERIFICATION_SENT',
             'VERIFIED'
         ];
@@ -62,7 +61,6 @@ class StatusService {
             'USERNAME_VALIDATED': 'Username is available',
             'USER_CREATED': 'User account created',
             'SYSTEM_USER_CREATED': 'System account setup complete',
-            'MAIL_CONFIGURED': 'Email system configured',
             'VERIFICATION_SENT': 'Verification email sent',
             'VERIFIED': 'Registration complete',
             'FAILED': 'Registration failed'

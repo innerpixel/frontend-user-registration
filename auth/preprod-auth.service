@@ -1,14 +1,28 @@
 [Unit]
 Description=Preprod Auth Service
-After=network.target mongodb.service
+After=network.target
 
 [Service]
+Environment=MONGO_USER=csmcladmin
+Environment=MONGO_PASS=csmcl.space.adventures
+Environment=MONGODB_URI=mongodb://csmcladmin:csmcl.space.adventures@localhost:27017/auth?authSource=admin
+Environment=CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+Environment=NODE_ENV=development
+Environment=PORT=3001
+Environment=DEBUG=auth:*
+Environment=JWT_SECRET=your-secret-key
+Environment=API_SERVICE_URL=http://auth.preprod.local:3001
+Environment=SMTP_HOST=localhost
+Environment=SMTP_PORT=25
+Environment=SMTP_SECURE=false
+Environment=SMTP_FROM=noreply@ld-csmlmail.test
+Environment=FRONTEND_URL=http://localhost:5173
 Type=simple
-User=nsbasicus
+User=root
 WorkingDirectory=/var/www/preprod.local/auth
 ExecStart=/usr/bin/node src/index.js
 Restart=always
-Environment=NODE_ENV=production
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target

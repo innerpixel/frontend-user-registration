@@ -5,7 +5,7 @@ const logger = createLogger('systemIntegrationService');
 
 class SystemIntegrationService {
     constructor() {
-        this.apiBaseUrl = process.env.API_SERVICE_URL || 'http://localhost:3000/api';
+        this.apiBaseUrl = process.env.API_SERVICE_URL || 'http://auth.preprod.local:3001';
         this.apiClient = axios.create({
             baseURL: this.apiBaseUrl,
             timeout: 10000
@@ -16,9 +16,9 @@ class SystemIntegrationService {
         try {
             logger.info(`Requesting system user creation for: ${userData.username}`);
             
-            const response = await this.apiClient.post('/users/system', {
+            const response = await this.apiClient.post('/api/users/system', {
                 username: userData.username,
-                email: userData.systemEmail
+                emailAccount: userData.emailAccount
             }, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -48,9 +48,10 @@ class SystemIntegrationService {
         try {
             logger.info(`Checking system user status for: ${username}`);
             
-            const response = await this.apiClient.get(`/users/system/${username}`, {
+            const response = await this.apiClient.get(`/api/users/system/${username}`, {
                 headers: {
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -58,7 +59,14 @@ class SystemIntegrationService {
 
         } catch (error) {
             logger.error(`Failed to check system user: ${error.message}`);
-            throw new Error('Failed to check system user status');
+            
+            if (error.response) {
+                throw new Error(error.response.data.message || 'Failed to check system user');
+            } else if (error.request) {
+                throw new Error('API service is not responding');
+            } else {
+                throw new Error('Failed to make API request');
+            }
         }
     }
 
@@ -66,7 +74,7 @@ class SystemIntegrationService {
         try {
             logger.info(`Requesting system user removal for: ${username}`);
             
-            const response = await this.apiClient.delete(`/users/system/${username}`, {
+            const response = await this.apiClient.delete(`/api/users/system/${username}`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }

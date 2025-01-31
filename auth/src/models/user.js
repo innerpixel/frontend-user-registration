@@ -15,10 +15,11 @@ const userSchema = new mongoose.Schema({
         unique: true,
         minLength: 3
     },
-    systemEmail: {
+    emailAccount: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        match: /^[a-z][a-z0-9_-]{2,15}@ld-csmlmail\.test$/
     },
     personalEmail: {
         type: String,
@@ -29,12 +30,6 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    },
-    simFrequency: {
-        type: String,
-        required: true,
-        unique: true,
-        match: /^CSMC\d{3}$/
     },
     registrationStatus: {
         type: String,

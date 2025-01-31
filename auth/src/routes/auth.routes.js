@@ -1,7 +1,8 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register } from '../controllers/authController.js';
+import authController from '../controllers/authController.js';
 import { validateRequest } from '../middleware/validate.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -10,20 +11,19 @@ router.get('/health', (req, res) => {
   res.json({ status: 'healthy', service: 'auth', timestamp: new Date().toISOString() });
 });
 
+// Register endpoint
 router.post('/register', [
-    body('name')
+    body('username')
         .exists()
         .trim()
-        .isLength({ min: 3 })
-        .withMessage('Name must be at least 3 characters long')
-        .matches(/^[a-zA-Z0-9_-]+$/)
-        .withMessage('Name can only contain letters, numbers, underscores and hyphens'),
+        .matches(/^[a-z][a-z0-9_-]{2,15}$/)
+        .withMessage('Username must start with a letter and can only contain lowercase letters, numbers, underscores and hyphens'),
     body('displayName')
         .exists()
         .trim()
         .isLength({ min: 3 })
         .withMessage('Display name must be at least 3 characters long'),
-    body('email')
+    body('personalEmail')
         .exists()
         .trim()
         .isEmail()
@@ -32,13 +32,47 @@ router.post('/register', [
         .exists()
         .isLength({ min: 8 })
         .withMessage('Password must be at least 8 characters long'),
-    body('simNumber')
+    body('phoneNumber')
         .exists()
         .trim()
-        .isLength({ min: 1 })
-        .withMessage('SIM number is required'),
+        .matches(/^\+[1-9]\d{1,14}$/)
+        .withMessage('Phone number must be in E.164 format (e.g., +12345678901)'),
     validateRequest,
-    register
+    authController.register.bind(authController)
 ]);
+
+// Login endpoint
+router.post('/login', [
+    body('username')
+        .exists()
+        .trim()
+        .notEmpty()
+        .withMessage('Username is required'),
+    body('password')
+        .exists()
+        .notEmpty()
+        .withMessage('Password is required'),
+    validateRequest,
+    authController.login.bind(authController)
+]);
+
+// Email verification endpoint
+router.post('/verify-email', [
+    body('token')
+        .exists()
+        .trim()
+        .notEmpty()
+        .withMessage('Verification token is required'),
+    validateRequest,
+    authController.verifyEmail.bind(authController)
+]);
+
+// Logout endpoint (requires auth)
+router.post('/logout', requireAuth, (req, res) => {
+    res.json({ 
+        success: true,
+        message: 'Logged out successfully'
+    });
+});
 
 export default router;

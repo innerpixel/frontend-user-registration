@@ -6,6 +6,7 @@ import { createLogger } from './utils/logger.js';
 import connectDB from './config/database.js';
 import authRoutes from './routes/auth.routes.js';
 import statusRoutes from './routes/status.routes.js';
+import systemRoutes from './routes/system.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +41,7 @@ app.get('/api/auth/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/status', statusRoutes);
+app.use('/api', systemRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {

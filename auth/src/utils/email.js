@@ -3,15 +3,11 @@ import { createLogger } from './logger.js';
 
 const logger = createLogger('emailService');
 
-// Create reusable transporter
+// Create reusable transporter for local Postfix
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    }
+    sendmail: true,
+    newline: 'unix',
+    path: '/usr/sbin/sendmail'
 });
 
 export const sendVerificationEmail = async ({ to, token, username, displayName }) => {
@@ -44,18 +40,18 @@ export const sendVerificationEmail = async ({ to, token, username, displayName }
                 <ul>
                     <li>Username: ${username}</li>
                     <li>Display Name: ${displayName}</li>
-                    <li>System Email: ${username}@local.domain</li>
+                    <li>System Email: ${username}@ld-csmlmail.test</li>
                 </ul>
                 <p>If you did not create this account, please ignore this email.</p>
                 <p>Best regards,<br>Cosmic Registration Team</p>
             `
         };
 
+        // Send email
         await transporter.sendMail(mailOptions);
-        logger.info(`Verification email sent to: ${to}`);
-
+        logger.info(`Verification email sent successfully to: ${to}`);
     } catch (error) {
-        logger.error(`Failed to send verification email: ${error.message}`);
+        logger.error('Failed to send verification email:', error);
         throw new Error('Failed to send verification email');
     }
 };
