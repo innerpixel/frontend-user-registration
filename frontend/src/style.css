@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: "VT323", monospace;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply rounded-sm border border-white/20 px-4 py-2 text-sm font-medium transition-all
+           hover:border-white/40 hover:bg-white/10 active:scale-95;
+  }
+
+  .retro-container {
+    @apply relative bg-gradient-to-b from-black via-zinc-900 to-black;
+  }
+
+  .retro-screen {
+    @apply rounded border border-white/10 backdrop-blur-sm;
+  }
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.card {
+  padding: 2em;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
